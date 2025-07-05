@@ -1,0 +1,27 @@
+service: my-app-realtime
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: ${env:AWS_REGION, 'us-east-1'}
+  environment:
+    CONNECTIONS_TABLE: ${env:CONNECTIONS_TABLE, 'Connections'}
+    ROOMS_TABLE: ${env:ROOMS_TABLE, 'Rooms'}
+
+functions:
+  connect:
+    handler: src/handlers/connect.handler
+    events:
+      - websocket:
+          route: $connect
+
+  disconnect:
+    handler: src/handlers/disconnect.handler
+    events:
+      - websocket:
+          route: $disconnect
+
+  message:
+    handler: src/handlers/message.handler
+    events:
+      - websocket:
+          route: $default
