@@ -1,11 +1,28 @@
 service: my-app-realtime
+
+frameworkVersion: "4"
+
 provider:
   name: aws
-  runtime: nodejs18.x
-  region: ${env:AWS_REGION, 'us-east-1'}
+  runtime: nodejs20.x
+  region: ${env:AWS_REGION, 'us-east-2'}
   environment:
     CONNECTIONS_TABLE: ${env:CONNECTIONS_TABLE, 'Connections'}
     ROOMS_TABLE: ${env:ROOMS_TABLE, 'Rooms'}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:PutItem
+            - dynamodb:DeleteItem
+            - dynamodb:Query
+          Resource:
+            - arn:aws:dynamodb:${env:AWS_REGION, 'us-east-2'}:*:* # Puedes especificar la tabla también si querés limitar más
+        - Effect: Allow
+          Action:
+            - execute-api:ManageConnections
+          Resource: "*"
 
 functions:
   connect:
@@ -25,3 +42,41 @@ functions:
     events:
       - websocket:
           route: $default
+
+plugins:
+  - serverless-offline
+
+resources:
+  Resources:
+    ConnectionsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${env:CONNECTIONS_TABLE, 'Connections'}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: connectionId
+            AttributeType: S
+          - AttributeName: roomId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: connectionId
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: roomId-index
+            KeySchema:
+              - AttributeName: roomId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+
+    RoomsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${env:ROOMS_TABLE, 'Rooms'}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: room_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: room_id
+            KeyType: HASH
