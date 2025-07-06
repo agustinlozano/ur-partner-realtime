@@ -48,6 +48,7 @@ plugins:
 
 resources:
   Resources:
+    # Connetctions Config table
     ConnectionsTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -65,7 +66,7 @@ resources:
           - IndexName: roomId-index
             KeySchema:
               - AttributeName: roomId
-                KeyType: HASH
+                KeyType: S
             Projection:
               ProjectionType: ALL
 
@@ -80,3 +81,11 @@ resources:
         KeySchema:
           - AttributeName: room_id
             KeyType: HASH
+
+# Package configuration (Serverless v4 handles bundling automatically)
+package:
+  patterns:
+    - "!node_modules/**"
+    - "!tests/**"
+    - "!*.md"
+    - "!.git/**"
