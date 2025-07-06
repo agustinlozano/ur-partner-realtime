@@ -1,0 +1,55 @@
+import {
+  APIGatewayEventRequestContextV2,
+  APIGatewayProxyWebsocketEventV2,
+} from "aws-lambda";
+import { ServiceFactory } from "@/services/ServiceFactory";
+import { dynamo } from "@/lib/dynamo";
+import { apiClient } from "@/lib/apigw";
+
+export const handler = async (
+  event: APIGatewayProxyWebsocketEventV2,
+  context: APIGatewayEventRequestContextV2
+) => {
+  console.log("[message] handler invoked", { event, context });
+  const connectionId = event.requestContext.connectionId;
+  let body;
+  try {
+    body = JSON.parse(event.body || "{}");
+  } catch (err) {
+    console.error("[message] Error parsing body", err);
+    return {
+      statusCode: 400,
+      body: "Invalid JSON body.",
+    };
+  }
+  console.log("[message] extracted params", { connectionId, body });
+
+  if (!connectionId) {
+    console.error("[message] Missing connectionId", { connectionId });
+    return {
+      statusCode: 400,
+      body: "Missing connectionId.",
+    };
+  }
+
+  const factory = new ServiceFactory(dynamo, apiClient);
+  const roomService = factory.createRoomService();
+
+  try {
+    console.log("[message] Processing message", { connectionId, body });
+    await roomService.broadcastToRoom(body.roomId, body);
+    console.log("[message] Message processed successfully");
+  } catch (err) {
+    console.error("[message] Error processing message", err);
+    return {
+      statusCode: 500,
+      body: "Failed to process message.",
+    };
+  }
+
+  console.log("[message] Success response");
+  return {
+    statusCode: 200,
+    body: "Message processed.",
+  };
+};

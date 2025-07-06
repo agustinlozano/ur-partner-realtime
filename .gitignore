@@ -1,3 +1,6 @@
 node_modules
 dist
 setup.md
+.serverless
+.env.local
+LAMBDA_USAGE.md
