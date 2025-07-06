@@ -22,6 +22,7 @@
     "@types/node": "^24.0.10",
     "esbuild": "^0.25.5",
     "serverless": "^4.17.1",
+    "serverless-offline": "^14.4.0",
     "typescript": "^5.8.3"
   }
 }
