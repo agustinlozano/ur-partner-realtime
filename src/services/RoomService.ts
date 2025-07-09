@@ -11,7 +11,11 @@ export class RoomService {
     private readonly api: ApiGatewayManagementApiClient
   ) {}
 
-  async broadcastToRoom(roomId: string, event: RoomEvent) {
+  async broadcastToRoom(
+    roomId: string,
+    event: RoomEvent,
+    excludeConnectionId?: string
+  ) {
     console.log("[broadcastToRoom] QueryCommand params", {
       TableName: process.env.CONNECTIONS_TABLE,
       IndexName: "roomId-index",
@@ -28,7 +32,12 @@ export class RoomService {
       })
     );
 
-    const connections = result.Items ?? [];
+    let connections = result.Items ?? [];
+    if (excludeConnectionId) {
+      connections = connections.filter(
+        ({ connectionId }) => connectionId !== excludeConnectionId
+      );
+    }
 
     console.log("[broadcastToRoom] Broadcasting to connections", {
       connections,
