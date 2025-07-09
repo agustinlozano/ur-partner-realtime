@@ -50,6 +50,24 @@ export const handler = async (
     };
   }
 
+  // Update slot status (connected) in the room
+  try {
+    const fieldName = `realtime_in_room_${slot}`;
+    await dynamo.send(
+      new (require("@aws-sdk/lib-dynamodb").UpdateCommand)({
+        TableName: process.env.ROOMS_TABLE,
+        Key: { room_id: roomId },
+        UpdateExpression: `SET #field = :val`,
+        ExpressionAttributeNames: { "#field": fieldName },
+        ExpressionAttributeValues: { ":val": true },
+      })
+    );
+    console.log("[connect] Updated", fieldName, "in Rooms table", { roomId });
+  } catch (err) {
+    console.error("[connect] Error updating Rooms table", err);
+    // No return error, just log
+  }
+
   console.log("[connect] Success response");
   return {
     statusCode: 200,
