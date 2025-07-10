@@ -33,6 +33,7 @@ export class RoomService {
     );
 
     let connections = result.Items ?? [];
+    console.log("[broadcastToRoom] connections", connections);
     if (excludeConnectionId) {
       connections = connections.filter(
         ({ connectionId }) => connectionId !== excludeConnectionId
@@ -45,7 +46,7 @@ export class RoomService {
     });
 
     await Promise.all(
-      connections.map(({ connectionId }) =>
+      connections.map(async ({ connectionId }) =>
         this.api
           .send(
             new PostToConnectionCommand({
@@ -53,14 +54,97 @@ export class RoomService {
               Data: Buffer.from(JSON.stringify(event)),
             })
           )
-          .catch((err) => {
+          .catch(async (err) => {
             if (err.statusCode === 410) {
               console.log("Stale connection", connectionId);
+              // Limpiar de la tabla Connections
+              try {
+                await this.dynamo.send(
+                  new (require("@aws-sdk/lib-dynamodb").DeleteCommand)({
+                    TableName: process.env.CONNECTIONS_TABLE,
+                    Key: { connectionId },
+                  })
+                );
+                console.log("Deleted stale connection from DB", connectionId);
+              } catch (e) {
+                console.error(
+                  "Error deleting stale connection",
+                  connectionId,
+                  e
+                );
+              }
             } else {
               console.error("Error posting to connection", err);
             }
           })
       )
     );
+  }
+
+  async addCompletedCategory(
+    roomId: string,
+    slot: "a" | "b",
+    category: string
+  ) {
+    const fieldName = `realtime_${slot}_completed_categories`;
+    try {
+      const getResp = (await this.dynamo.send(
+        new (require("@aws-sdk/lib-dynamodb").GetCommand)({
+          TableName: process.env.ROOMS_TABLE,
+          Key: { room_id: roomId },
+          ProjectionExpression: fieldName,
+        })
+      )) as { Item?: Record<string, any> };
+      let categories =
+        (getResp && getResp.Item && getResp.Item[fieldName]) || [];
+      if (!Array.isArray(categories)) categories = [];
+      if (!categories.includes(category)) {
+        categories.push(category);
+        await this.dynamo.send(
+          new (require("@aws-sdk/lib-dynamodb").UpdateCommand)({
+            TableName: process.env.ROOMS_TABLE,
+            Key: { room_id: roomId },
+            UpdateExpression: `SET #field = :val`,
+            ExpressionAttributeNames: { "#field": fieldName },
+            ExpressionAttributeValues: { ":val": categories },
+          })
+        );
+        console.log(`[RoomService] Updated ${fieldName} in Rooms table`, {
+          roomId,
+          categories,
+        });
+      } else {
+        console.log(`[RoomService] Category already present in ${fieldName}`, {
+          roomId,
+          category,
+        });
+      }
+    } catch (err) {
+      console.error("[RoomService] Error updating completed categories", err);
+    }
+  }
+
+  async setRealtimeInRoomSlot(roomId: string, slot: "a" | "b", value: boolean) {
+    const fieldName = `realtime_in_room_${slot}`;
+    try {
+      await this.dynamo.send(
+        new (require("@aws-sdk/lib-dynamodb").UpdateCommand)({
+          TableName: process.env.ROOMS_TABLE,
+          Key: { room_id: roomId },
+          UpdateExpression: `SET #field = :val`,
+          ExpressionAttributeNames: { "#field": fieldName },
+          ExpressionAttributeValues: { ":val": value },
+        })
+      );
+      console.log(
+        `[RoomService] Updated ${fieldName} to ${value} in Rooms table`,
+        { roomId }
+      );
+    } catch (err) {
+      console.error(
+        `[RoomService] Error updating presence for ${fieldName}`,
+        err
+      );
+    }
   }
 }
