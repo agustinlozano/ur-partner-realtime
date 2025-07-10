@@ -111,7 +111,7 @@ socket.onmessage = (e) => console.log("📨", e.data);
 ## ✅ Next Steps
 
 - [x] `$connect`: store connectionId
-- [ ] `$disconnect`: remove connectionId
+- [x] `$disconnect`: remove connectionId
 - [ ] `$default`: handle events (roomId, type)
-- [ ] Client helper `useRoomSocket`
-- [ ] Store in DynamoDB with `roomId` as partition key (use GSI if needed)
+- [x] Client helper `useRoomSocket`
+- [x] Store in DynamoDB with `roomId` as partition key (use GSI if needed)
