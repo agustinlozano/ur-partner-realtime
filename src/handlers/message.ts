@@ -10,7 +10,7 @@ export const handler = async (
   event: APIGatewayProxyWebsocketEventV2,
   context: APIGatewayEventRequestContextV2
 ) => {
-  console.log("[message] handler invoked", { event, context });
+  console.log("[message] handler invoked", { eventBody: event.body });
   const connectionId = event.requestContext.connectionId;
   let body;
   try {
@@ -37,7 +37,21 @@ export const handler = async (
 
   try {
     console.log("[message] Processing message", { connectionId, body });
-    await roomService.broadcastToRoom(body.roomId, body);
+    if (body.type === "get_in" || body.type === "leave") {
+      if (body.type === "leave") {
+        await roomService.setRealtimeInRoomSlot(body.roomId, body.slot, false);
+      }
+      await roomService.broadcastToRoom(body.roomId, body, connectionId);
+    } else if (body.type === "category_fixed") {
+      await roomService.addCompletedCategory(
+        body.roomId,
+        body.slot,
+        body.category
+      );
+      await roomService.broadcastToRoom(body.roomId, body);
+    } else {
+      await roomService.broadcastToRoom(body.roomId, body);
+    }
     console.log("[message] Message processed successfully");
   } catch (err) {
     console.error("[message] Error processing message", err);
