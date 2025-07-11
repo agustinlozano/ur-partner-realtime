@@ -44,14 +44,17 @@ export const handler = async (
       await roomService.broadcastToRoom(body.roomId, body, connectionId);
     } else if (body.type === "category_fixed") {
       await roomService.fixCategory(body.roomId, body.slot, body.category);
-      await roomService.broadcastToRoom(body.roomId, body);
+      await roomService.broadcastToRoom(body.roomId, body, connectionId);
     } else if (body.type === "category_completed") {
       await roomService.addCompletedCategory(
         body.roomId,
         body.slot,
         body.category
       );
-      await roomService.broadcastToRoom(body.roomId, body);
+      await roomService.broadcastToRoom(body.roomId, body, connectionId);
+    } else if (body.type === "is_ready") {
+      await roomService.setReady(body.roomId, body.slot);
+      await roomService.broadcastToRoom(body.roomId, body, connectionId);
     } else {
       await roomService.broadcastToRoom(body.roomId, body);
     }

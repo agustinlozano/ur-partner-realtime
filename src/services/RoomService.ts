@@ -172,4 +172,24 @@ export class RoomService {
       );
     }
   }
+
+  async setReady(roomId: string, slot: "a" | "b") {
+    const fieldName = `realtime_${slot}_ready`;
+    try {
+      await this.dynamo.send(
+        new (require("@aws-sdk/lib-dynamodb").UpdateCommand)({
+          TableName: process.env.ROOMS_TABLE,
+          Key: { room_id: roomId },
+          UpdateExpression: `SET #field = :val`,
+          ExpressionAttributeNames: { "#field": fieldName },
+          ExpressionAttributeValues: { ":val": true },
+        })
+      );
+      console.log(`[RoomService] Updated ${fieldName} to true in Rooms table`, {
+        roomId,
+      });
+    } catch (err) {
+      console.error(`[RoomService] Error updating ready for ${fieldName}`, err);
+    }
+  }
 }
