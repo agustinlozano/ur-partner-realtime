@@ -95,23 +95,24 @@ export class RoomService {
           ProjectionExpression: fieldName,
         })
       )) as { Item?: Record<string, any> };
-      let categories =
-        (getResp && getResp.Item && getResp.Item[fieldName]) || [];
-      if (!Array.isArray(categories)) categories = [];
-      if (!categories.includes(category)) {
-        categories.push(category);
+      let categoriesObj =
+        (getResp && getResp.Item && getResp.Item[fieldName]) || {};
+      if (typeof categoriesObj !== "object" || Array.isArray(categoriesObj))
+        categoriesObj = {};
+      if (!categoriesObj[category]) {
+        categoriesObj[category] = Date.now();
         await this.dynamo.send(
           new (require("@aws-sdk/lib-dynamodb").UpdateCommand)({
             TableName: process.env.ROOMS_TABLE,
             Key: { room_id: roomId },
             UpdateExpression: `SET #field = :val`,
             ExpressionAttributeNames: { "#field": fieldName },
-            ExpressionAttributeValues: { ":val": categories },
+            ExpressionAttributeValues: { ":val": categoriesObj },
           })
         );
         console.log(`[RoomService] Updated ${fieldName} in Rooms table`, {
           roomId,
-          categories,
+          categoriesObj,
         });
       } else {
         console.log(`[RoomService] Category already present in ${fieldName}`, {
@@ -143,6 +144,30 @@ export class RoomService {
     } catch (err) {
       console.error(
         `[RoomService] Error updating presence for ${fieldName}`,
+        err
+      );
+    }
+  }
+
+  async fixCategory(roomId: string, slot: "a" | "b", category: string) {
+    const fieldName = `realtime_${slot}_fixed_category`;
+    try {
+      await this.dynamo.send(
+        new (require("@aws-sdk/lib-dynamodb").UpdateCommand)({
+          TableName: process.env.ROOMS_TABLE,
+          Key: { room_id: roomId },
+          UpdateExpression: `SET #field = :val`,
+          ExpressionAttributeNames: { "#field": fieldName },
+          ExpressionAttributeValues: { ":val": category },
+        })
+      );
+      console.log(
+        `[RoomService] Updated ${fieldName} to ${category} in Rooms table`,
+        { roomId }
+      );
+    } catch (err) {
+      console.error(
+        `[RoomService] Error updating fixed category for ${fieldName}`,
         err
       );
     }
