@@ -43,6 +43,9 @@ export const handler = async (
       }
       await roomService.broadcastToRoom(body.roomId, body, connectionId);
     } else if (body.type === "category_fixed") {
+      await roomService.fixCategory(body.roomId, body.slot, body.category);
+      await roomService.broadcastToRoom(body.roomId, body);
+    } else if (body.type === "category_completed") {
       await roomService.addCompletedCategory(
         body.roomId,
         body.slot,
