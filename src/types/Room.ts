@@ -50,8 +50,8 @@ export interface Room {
   realtime_b_progress?: number;
   realtime_a_fixed_category?: string;
   realtime_b_fixed_category?: string;
-  realtime_a_completed_categories?: string[];
-  realtime_b_completed_categories?: string[];
+  realtime_a_completed_categories?: { [category: string]: number };
+  realtime_b_completed_categories?: { [category: string]: number };
   realtime_chat_messages?: string[];
   realtime_in_room_a?: boolean;
   realtime_in_room_b?: boolean;
