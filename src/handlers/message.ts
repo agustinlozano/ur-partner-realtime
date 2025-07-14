@@ -55,6 +55,8 @@ export const handler = async (
     } else if (body.type === "is_ready") {
       await roomService.setReady(body.roomId, body.slot);
       await roomService.broadcastToRoom(body.roomId, body, connectionId);
+    } else if (body.type === "say") {
+      await roomService.broadcastToRoom(body.roomId, body, connectionId);
     } else {
       await roomService.broadcastToRoom(body.roomId, body);
     }
