@@ -11,6 +11,16 @@ export const handler = async (
   context: APIGatewayEventRequestContextV2
 ) => {
   // console.log("\n\n[connect] handler invoked", { event, context });
+  
+  // Log para debug de variables de entorno
+  console.log("[connect] Environment variables:", {
+    CONNECTIONS_TABLE: process.env.CONNECTIONS_TABLE,
+    ROOMS_TABLE: process.env.ROOMS_TABLE,
+    WEBSOCKET_API_ENDPOINT: process.env.WEBSOCKET_API_ENDPOINT,
+    AWS_REGION: process.env.AWS_REGION,
+    IS_OFFLINE: process.env.IS_OFFLINE
+  });
+  
   const connectionId = event.requestContext.connectionId;
 
   const rawQueryString = (event as any).queryStringParameters || "";
