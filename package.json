@@ -1,12 +1,13 @@
 {
-  "name": "ur-partnet-real-time",
+  "name": "ur-partnet-realtime",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "vitest",
     "build": "node build.mjs",
-    "dev": "serverless offline"
+    "dev": "serverless offline",
+    "deploy": "serverless deploy"
   },
   "keywords": [],
   "author": "",

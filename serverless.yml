@@ -9,6 +9,9 @@ provider:
   environment:
     CONNECTIONS_TABLE: ${env:CONNECTIONS_TABLE, 'Connections'}
     ROOMS_TABLE: ${env:ROOMS_TABLE, 'Rooms'}
+    WEBSOCKET_API_ENDPOINT: !Sub "https://${WebsocketsApi}.execute-api.${AWS::Region}.amazonaws.com/${sls:stage}"
+  deploymentBucket:
+    name: ur-partner
   iam:
     role:
       statements:
@@ -17,12 +20,29 @@ provider:
             - dynamodb:PutItem
             - dynamodb:DeleteItem
             - dynamodb:Query
+            - dynamodb:UpdateItem
           Resource:
-            - arn:aws:dynamodb:${env:AWS_REGION, 'us-east-2'}:*:* # Puedes especificar la tabla también si querés limitar más
+            - arn:aws:dynamodb:${env:AWS_REGION, 'us-east-2'}:*:table/Rooms
+            - arn:aws:dynamodb:${env:AWS_REGION, 'us-east-2'}:*:table/Connections
+            - arn:aws:dynamodb:${env:AWS_REGION, 'us-east-2'}:*:table/Connections/index/roomId-index
+
         - Effect: Allow
           Action:
             - execute-api:ManageConnections
           Resource: "*"
+        # Permisos para deploy de Serverless (S3 y SSM)
+        - Effect: Allow
+          Action:
+            - s3:PutObject
+            - s3:GetObject
+            - s3:ListBucket
+            - s3:CreateBucket
+          Resource: "arn:aws:s3:::*"
+        - Effect: Allow
+          Action:
+            - ssm:GetParameter
+            - ssm:PutParameter
+          Resource: "arn:aws:ssm:${env:AWS_REGION, 'us-east-2'}:*:parameter/serverless-framework/*"
 
 functions:
   connect:
@@ -46,41 +66,42 @@ functions:
 plugins:
   - serverless-offline
 
-resources:
-  Resources:
-    # Connetctions Config table
-    ConnectionsTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${env:CONNECTIONS_TABLE, 'Connections'}
-        BillingMode: PAY_PER_REQUEST
-        AttributeDefinitions:
-          - AttributeName: connectionId
-            AttributeType: S
-          - AttributeName: roomId
-            AttributeType: S
-        KeySchema:
-          - AttributeName: connectionId
-            KeyType: HASH
-        GlobalSecondaryIndexes:
-          - IndexName: roomId-index
-            KeySchema:
-              - AttributeName: roomId
-                KeyType: S
-            Projection:
-              ProjectionType: ALL
+# resources:
+#   Resources:
+#     # Connetctions Config table
+#     ConnectionsTable:
+#       Type: AWS::DynamoDB::Table
+#       Properties:
+#         TableName: Connections
+#         AttributeDefinitions:
+#           - AttributeName: connectionId
+#             AttributeType: S
+#           - AttributeName: roomId
+#             AttributeType: S
+#         KeySchema:
+#           - AttributeName: connectionId
+#             KeyType: HASH
+#         GlobalSecondaryIndexes:
+#           - IndexName: roomId-index
+#             KeySchema:
+#               - AttributeName: roomId
+#                 KeyType: HASH
+#             Projection:
+#               ProjectionType: ALL
+#             BillingMode: PAY_PER_REQUEST
+#         BillingMode: PAY_PER_REQUEST
 
-    RoomsTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${env:ROOMS_TABLE, 'Rooms'}
-        BillingMode: PAY_PER_REQUEST
-        AttributeDefinitions:
-          - AttributeName: room_id
-            AttributeType: S
-        KeySchema:
-          - AttributeName: room_id
-            KeyType: HASH
+#     RoomsTable:
+#       Type: AWS::DynamoDB::Table
+#       Properties:
+#         TableName: Rooms
+#         AttributeDefinitions:
+#           - AttributeName: room_id
+#             AttributeType: S
+#         KeySchema:
+#           - AttributeName: room_id
+#             KeyType: HASH
+#         BillingMode: PAY_PER_REQUEST
 
 # Package configuration (Serverless v4 handles bundling automatically)
 package:
