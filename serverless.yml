@@ -21,6 +21,7 @@ provider:
             - dynamodb:DeleteItem
             - dynamodb:Query
             - dynamodb:UpdateItem
+            - dynamodb:GetItem
           Resource:
             - arn:aws:dynamodb:${env:AWS_REGION, 'us-east-2'}:*:table/Rooms
             - arn:aws:dynamodb:${env:AWS_REGION, 'us-east-2'}:*:table/Connections
