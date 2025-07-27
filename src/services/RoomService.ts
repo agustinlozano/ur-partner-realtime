@@ -95,24 +95,27 @@ export class RoomService {
           ProjectionExpression: fieldName,
         })
       )) as { Item?: Record<string, any> };
-      let categoriesObj =
-        (getResp && getResp.Item && getResp.Item[fieldName]) || {};
-      if (typeof categoriesObj !== "object" || Array.isArray(categoriesObj))
-        categoriesObj = {};
-      if (!categoriesObj[category]) {
-        categoriesObj[category] = Date.now();
+      let categoriesArr =
+        (getResp && getResp.Item && getResp.Item[fieldName]) || [];
+      if (!Array.isArray(categoriesArr)) categoriesArr = [];
+      // Check if category already exists
+      const exists = categoriesArr.some(
+        (item: any) => item.category === category
+      );
+      if (!exists) {
+        categoriesArr.push({ category, value: Date.now() });
         await this.dynamo.send(
           new (require("@aws-sdk/lib-dynamodb").UpdateCommand)({
             TableName: process.env.ROOMS_TABLE,
             Key: { room_id: roomId },
             UpdateExpression: `SET #field = :val`,
             ExpressionAttributeNames: { "#field": fieldName },
-            ExpressionAttributeValues: { ":val": categoriesObj },
+            ExpressionAttributeValues: { ":val": categoriesArr },
           })
         );
         console.log(`[RoomService] Updated ${fieldName} in Rooms table`, {
           roomId,
-          categoriesObj,
+          categoriesArr,
         });
       } else {
         console.log(`[RoomService] Category already present in ${fieldName}`, {
