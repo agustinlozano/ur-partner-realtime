@@ -128,6 +128,62 @@ export class RoomService {
     }
   }
 
+  async removeCompletedCategory(
+    roomId: string,
+    slot: "a" | "b",
+    category: string
+  ) {
+    const fieldName = `realtime_${slot}_completed_categories`;
+    try {
+      const getResp = (await this.dynamo.send(
+        new (require("@aws-sdk/lib-dynamodb").GetCommand)({
+          TableName: process.env.ROOMS_TABLE,
+          Key: { room_id: roomId },
+          ProjectionExpression: fieldName,
+        })
+      )) as { Item?: Record<string, any> };
+      let categoriesArr =
+        (getResp && getResp.Item && getResp.Item[fieldName]) || [];
+      if (!Array.isArray(categoriesArr)) categoriesArr = [];
+
+      // Check if category exists and remove it
+      const initialLength = categoriesArr.length;
+      categoriesArr = categoriesArr.filter(
+        (item: any) => item.category !== category
+      );
+
+      if (categoriesArr.length < initialLength) {
+        await this.dynamo.send(
+          new (require("@aws-sdk/lib-dynamodb").UpdateCommand)({
+            TableName: process.env.ROOMS_TABLE,
+            Key: { room_id: roomId },
+            UpdateExpression: `SET #field = :val`,
+            ExpressionAttributeNames: { "#field": fieldName },
+            ExpressionAttributeValues: { ":val": categoriesArr },
+          })
+        );
+        console.log(
+          `[RoomService] Removed category from ${fieldName} in Rooms table`,
+          {
+            roomId,
+            category,
+            categoriesArr,
+          }
+        );
+      } else {
+        console.log(
+          `[RoomService] Category not found in ${fieldName}, no action taken`,
+          {
+            roomId,
+            category,
+          }
+        );
+      }
+    } catch (err) {
+      console.error("[RoomService] Error removing completed category", err);
+    }
+  }
+
   async setRealtimeInRoomSlot(roomId: string, slot: "a" | "b", value: boolean) {
     const fieldName = `realtime_in_room_${slot}`;
     try {
