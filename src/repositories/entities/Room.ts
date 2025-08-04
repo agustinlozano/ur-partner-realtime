@@ -112,29 +112,29 @@ export const createRoomEntity = (client: DynamoDBDocumentClient) => {
         realtime_b_progress: { type: "number" },
         realtime_a_fixed_category: { type: "string" },
         realtime_b_fixed_category: { type: "string" },
-        realtime_a_completed_categories: { 
+        realtime_a_completed_categories: {
           type: "list",
           items: {
             type: "map",
             properties: {
               category: { type: "string" },
-              value: { type: "number" }
-            }
-          }
+              value: { type: "number" },
+            },
+          },
         },
-        realtime_b_completed_categories: { 
+        realtime_b_completed_categories: {
           type: "list",
           items: {
             type: "map",
             properties: {
               category: { type: "string" },
-              value: { type: "number" }
-            }
-          }
+              value: { type: "number" },
+            },
+          },
         },
-        realtime_chat_messages: { 
+        realtime_chat_messages: {
           type: "list",
-          items: { type: "string" }
+          items: { type: "string" },
         },
         realtime_in_room_a: { type: "boolean" },
         realtime_in_room_b: { type: "boolean" },
