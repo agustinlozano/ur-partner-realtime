@@ -23,6 +23,7 @@ my-app-realtime/
 │   │   ├── connect.ts
 │   │   ├── disconnect.ts
 │   │   └── message.ts
+│   │   └── message.router.ts
 │   ├── lib/
 │   │   ├── dynamo.ts
 │   │   └── apigw.ts
@@ -32,6 +33,7 @@ my-app-realtime/
 │   │   └── ServiceFactory.ts
 │   └── types/
 │       └── RoomEvent.ts
+│       └── Room.ts
 ```
 
 ---
