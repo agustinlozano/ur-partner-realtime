@@ -197,6 +197,28 @@ describe("message handler", () => {
     expect(result.statusCode).toBe(200);
   });
 
+  it("maneja eventos ping correctamente", async () => {
+    const event = createMockEvent({
+      type: "ping",
+      roomId: "room1",
+      slot: "a",
+    });
+
+    const result = await handler(event as any, {} as any);
+
+    // Ping events should be broadcasted to all (no excludeConnectionId)
+    expect(mockRoomService.broadcastToRoom).toHaveBeenCalledWith(
+      "room1",
+      {
+        type: "ping",
+        roomId: "room1",
+        slot: "a",
+      },
+      "test-connection-id"
+    );
+    expect(result.statusCode).toBe(200);
+  });
+
   it("maneja eventos desconocidos enviándolos a todos", async () => {
     const event = createMockEvent({
       type: "unknown_event",
@@ -271,24 +293,6 @@ describe("message handler", () => {
 
     expect(result.statusCode).toBe(500);
     expect(result.body).toBe("Failed to process message.");
-  });
-
-  it("maneja eventos ping correctamente", async () => {
-    const event = createMockEvent({
-      type: "ping",
-      roomId: "room1",
-      slot: "a",
-    });
-
-    const result = await handler(event as any, {} as any);
-
-    // Ping events should be broadcasted to all (no excludeConnectionId)
-    expect(mockRoomService.broadcastToRoom).toHaveBeenCalledWith("room1", {
-      type: "ping",
-      roomId: "room1",
-      slot: "a",
-    });
-    expect(result.statusCode).toBe(200);
   });
 
   it("maneja eventos progress_updated correctamente", async () => {
