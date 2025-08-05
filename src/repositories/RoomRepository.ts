@@ -54,10 +54,28 @@ export class RoomRepository {
     const fieldName =
       slot === "a" ? "realtime_in_room_a" : "realtime_in_room_b";
 
-    await this.entity
-      .patch({ room_id: roomId })
-      .set({ [fieldName]: value })
-      .go();
+    try {
+      // Try to patch first (update existing item)
+      await this.entity
+        .patch({ room_id: roomId })
+        .set({ [fieldName]: value })
+        .go();
+    } catch (error: any) {
+      // If item doesn't exist, create it with put
+      if (
+        error.code === 4001 &&
+        error?.cause?.__type?.includes("ConditionalCheckFailedException")
+      ) {
+        await this.entity
+          .put({
+            room_id: roomId,
+            [fieldName]: value,
+          })
+          .go();
+      } else {
+        throw error;
+      }
+    }
 
     console.log(
       `[RoomRepository] Updated ${fieldName} to ${value} in Rooms table`,
@@ -66,12 +84,13 @@ export class RoomRepository {
   }
 
   /**
-   * Add a completed category for a slot
+   * Add a completed category to a slot (not global completed_categories)
    */
   async addCompletedCategory(
     roomId: string,
     slot: "a" | "b",
-    category: string
+    category: string,
+    value: number = 1
   ): Promise<void> {
     const fieldName =
       slot === "a"
@@ -80,31 +99,117 @@ export class RoomRepository {
 
     // Get current categories
     const room = await this.getRoomFields(roomId, [fieldName]);
-    let categoriesArr =
+    const currentCategories =
       (room?.[fieldName] as Array<{ category: string; value: number }>) || [];
 
     // Check if category already exists
-    const exists = categoriesArr.some((item) => item.category === category);
+    const existingIndex = currentCategories.findIndex(
+      (item) => item.category === category
+    );
 
-    if (!exists) {
-      categoriesArr.push({ category, value: Date.now() });
+    if (existingIndex >= 0) {
+      // Update existing category
+      currentCategories[existingIndex].value = value;
+    } else {
+      // Add new category
+      currentCategories.push({ category, value });
+    }
 
+    try {
+      // Try to patch first (update existing item)
       await this.entity
         .patch({ room_id: roomId })
-        .set({ [fieldName]: categoriesArr })
+        .set({ [fieldName]: currentCategories })
         .go();
-
-      console.log(`[RoomRepository] Added category to ${fieldName}`, {
-        roomId,
-        category,
-        categoriesArr,
-      });
-    } else {
-      console.log(`[RoomRepository] Category already present in ${fieldName}`, {
-        roomId,
-        category,
-      });
+    } catch (error: any) {
+      // If item doesn't exist, create it with put
+      if (
+        error.code === 4001 &&
+        error?.cause?.__type?.includes("ConditionalCheckFailedException")
+      ) {
+        await this.entity
+          .put({
+            room_id: roomId,
+            [fieldName]: currentCategories,
+          })
+          .go();
+      } else {
+        throw error;
+      }
     }
+
+    console.log(
+      `[RoomRepository] Added/updated category ${category} in ${fieldName}`,
+      { roomId, category, value }
+    );
+  }
+
+  /**
+   * Set ready status for a slot (realtime ready)
+   */
+  async setRealtimeReady(roomId: string, slot: "a" | "b"): Promise<void> {
+    const fieldName = slot === "a" ? "realtime_a_ready" : "realtime_b_ready";
+
+    try {
+      await this.entity
+        .patch({ room_id: roomId })
+        .set({ [fieldName]: true })
+        .go();
+    } catch (error: any) {
+      // If item doesn't exist, create it with put
+      if (
+        error.code === 4001 &&
+        error?.cause?.__type?.includes("ConditionalCheckFailedException")
+      ) {
+        await this.entity
+          .put({
+            room_id: roomId,
+            [fieldName]: true,
+          })
+          .go();
+      } else {
+        throw error;
+      }
+    }
+
+    console.log(
+      `[RoomRepository] Updated ${fieldName} to true in Rooms table`,
+      { roomId }
+    );
+  }
+
+  /**
+   * Set general ready status (non-realtime ready)
+   */
+  async setReady(roomId: string, slot: "a" | "b"): Promise<void> {
+    const fieldName = slot === "a" ? "a_ready" : "b_ready";
+
+    try {
+      await this.entity
+        .patch({ room_id: roomId })
+        .set({ [fieldName]: true })
+        .go();
+    } catch (error: any) {
+      // If item doesn't exist, create it with put
+      if (
+        error.code === 4001 &&
+        error?.cause?.__type?.includes("ConditionalCheckFailedException")
+      ) {
+        await this.entity
+          .put({
+            room_id: roomId,
+            [fieldName]: true,
+          })
+          .go();
+      } else {
+        throw error;
+      }
+    }
+
+    console.log(
+      `[RoomRepository] Updated ${fieldName} to true in Rooms table`,
+      { roomId }
+    );
   }
 
   /**
@@ -177,25 +282,6 @@ export class RoomRepository {
   }
 
   /**
-   * Set ready status for a slot
-   */
-  async setReady(roomId: string, slot: "a" | "b"): Promise<void> {
-    const fieldName = slot === "a" ? "realtime_a_ready" : "realtime_b_ready";
-
-    await this.entity
-      .patch({ room_id: roomId })
-      .set({ [fieldName]: true })
-      .go();
-
-    console.log(
-      `[RoomRepository] Updated ${fieldName} to true in Rooms table`,
-      {
-        roomId,
-      }
-    );
-  }
-
-  /**
    * Set not ready status for a slot
    */
   async setNotReady(roomId: string, slot: "a" | "b"): Promise<void> {
@@ -208,9 +294,7 @@ export class RoomRepository {
 
     console.log(
       `[RoomRepository] Updated ${fieldName} to false in Rooms table`,
-      {
-        roomId,
-      }
+      { roomId }
     );
   }
 
