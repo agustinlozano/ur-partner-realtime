@@ -10,22 +10,10 @@ export const handler = async (
   event: APIGatewayProxyWebsocketEventV2,
   context: APIGatewayEventRequestContextV2
 ) => {
-  // console.log("\n\n[connect] handler invoked", { event, context });
-  
-  // Log para debug de variables de entorno
-  console.log("[connect] Environment variables:", {
-    CONNECTIONS_TABLE: process.env.CONNECTIONS_TABLE,
-    ROOMS_TABLE: process.env.ROOMS_TABLE,
-    WEBSOCKET_API_ENDPOINT: process.env.WEBSOCKET_API_ENDPOINT,
-    AWS_REGION: process.env.AWS_REGION,
-    IS_OFFLINE: process.env.IS_OFFLINE
-  });
-  
+  console.log("[connect] handler invoked with ElectroDB repositories");
+
   const connectionId = event.requestContext.connectionId;
-
   const rawQueryString = (event as any).queryStringParameters || "";
-
-  console.log("[connect] rawQueryString", rawQueryString);
 
   const searchParams = new URLSearchParams(rawQueryString);
   const roomId = searchParams.get("roomId") ?? "";
@@ -46,10 +34,17 @@ export const handler = async (
   }
 
   const factory = new ServiceFactory(dynamo, apiClient);
+
+  // Use the new repository-based services
   const connectionService = factory.createConnectionService();
+  const roomService = factory.createRoomService();
 
   try {
-    console.log("[connect] Saving connection", { connectionId, roomId, slot });
+    console.log("[connect] Saving connection using repository", {
+      connectionId,
+      roomId,
+      slot,
+    });
     await connectionService.saveConnection(connectionId, roomId, slot);
     console.log("[connect] Connection saved successfully");
   } catch (err) {
@@ -60,27 +55,21 @@ export const handler = async (
     };
   }
 
-  // Update slot status (connected) in the room
+  // Update slot status (connected) in the room using repository
   try {
-    const fieldName = `realtime_in_room_${slot}`;
-    await dynamo.send(
-      new (require("@aws-sdk/lib-dynamodb").UpdateCommand)({
-        TableName: process.env.ROOMS_TABLE,
-        Key: { room_id: roomId },
-        UpdateExpression: `SET #field = :val`,
-        ExpressionAttributeNames: { "#field": fieldName },
-        ExpressionAttributeValues: { ":val": true },
-      })
-    );
-    console.log("[connect] Updated", fieldName, "in Rooms table", { roomId });
+    await roomService.setRealtimeInRoomSlot(roomId, slot, true);
+    console.log("[connect] Updated realtime presence using repository", {
+      roomId,
+      slot,
+    });
   } catch (err) {
-    console.error("[connect] Error updating Rooms table", err);
+    console.error("[connect] Error updating room presence", err);
     // No return error, just log
   }
 
   console.log("[connect] Success response");
   return {
     statusCode: 200,
-    body: "Connected.",
+    body: "Connected via ElectroDB repositories.",
   };
 };
