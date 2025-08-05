@@ -1,6 +1,6 @@
 import { ConnectionRepository } from "@/repositories/ConnectionRepository";
 
-// V2 based on ElectroDB repository
+// [Note] V2 implementation is based on ElectroDB repos
 export class ConnectionServiceV2 {
   constructor(private readonly connectionRepository: ConnectionRepository) {}
 
