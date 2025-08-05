@@ -17,6 +17,9 @@ importers:
       '@aws-sdk/lib-dynamodb':
         specifier: ^3.840.0
         version: 3.840.0(@aws-sdk/client-dynamodb@3.840.0)
+      electrodb:
+        specifier: ^3.4.3
+        version: 3.4.3(@aws-sdk/client-dynamodb@3.840.0)
       hono:
         specifier: ^4.8.4
         version: 4.8.4
@@ -923,6 +926,9 @@ packages:
   eastasianwidth@0.2.0:
     resolution: {integrity: sha512-I88TYZWc9XiYHRQ4/3c5rjjfgkjhLyW2luGIheGERbNQ6OY7yTybanSpDXZa8y7VUP9YmDcYa+eyq4ca7iLqWA==}
 
+  electrodb@3.4.3:
+    resolution: {integrity: sha512-4KpIF56mg+edhV+T6yzOiDEN7LnyWLX9iRp6+D6lYldX8j6VNBb8i5QK71k3V0hoCqKdl70i69ph7NBdPCkFwQ==}
+
   emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
 
@@ -1124,6 +1130,9 @@ packages:
     resolution: {integrity: sha512-8TNmfeTCk2Le33A3vRRwtuworG/L5RrgMvdjhKZxvyShO+mBu2fP50OWUjRLNtvw344DdDarFh9buFAZs5ujeA==}
     engines: {node: '>=18.0.0'}
     hasBin: true
+
+  jsonschema@1.2.7:
+    resolution: {integrity: sha512-3dFMg9hmI9LdHag/BRIhMefCfbq1hicvYMy8YhZQorAdzOzWz7NjniSpn39yjpzUAMIWtGyyZuH2KNBloH7ZLw==}
 
   jsonschema@1.5.0:
     resolution: {integrity: sha512-K+A9hhqbn0f3pJX17Q/7H6yQfD/5OXgdrR5UE12gMXCiN9D5Xq2o5mddV2QEcX/bjla99ASsAAQUyMCCRWAEhw==}
@@ -2836,6 +2845,14 @@ snapshots:
 
   eastasianwidth@0.2.0: {}
 
+  electrodb@3.4.3(@aws-sdk/client-dynamodb@3.840.0):
+    dependencies:
+      '@aws-sdk/lib-dynamodb': 3.840.0(@aws-sdk/client-dynamodb@3.840.0)
+      '@aws-sdk/util-dynamodb': 3.840.0(@aws-sdk/client-dynamodb@3.840.0)
+      jsonschema: 1.2.7
+    transitivePeerDependencies:
+      - '@aws-sdk/client-dynamodb'
+
   emoji-regex@8.0.0: {}
 
   emoji-regex@9.2.2: {}
@@ -3048,6 +3065,8 @@ snapshots:
       '@jsep-plugin/assignment': 1.3.0(jsep@1.4.0)
       '@jsep-plugin/regex': 1.0.4(jsep@1.4.0)
       jsep: 1.4.0
+
+  jsonschema@1.2.7: {}
 
   jsonschema@1.5.0: {}
 

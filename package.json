@@ -17,6 +17,7 @@
     "@aws-sdk/client-apigatewaymanagementapi": "^3.840.0",
     "@aws-sdk/client-dynamodb": "^3.840.0",
     "@aws-sdk/lib-dynamodb": "^3.840.0",
+    "electrodb": "^3.4.3",
     "hono": "^4.8.4"
   },
   "devDependencies": {
