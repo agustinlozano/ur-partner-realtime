@@ -22,7 +22,8 @@ export class ConnectionRepository {
   ): Promise<void> {
     // First, find any existing connection for this roomId and slot
     const existingConnections = await this.entity.query
-      .byRoom({ roomId, slot })
+      .byRoom({ roomId })
+      .where(({ slot: slotAttr }, { eq }) => eq(slotAttr, slot))
       .go();
 
     // Delete existing connection if it exists and is different
@@ -74,7 +75,10 @@ export class ConnectionRepository {
     roomId: string,
     slot: "a" | "b"
   ): Promise<ConnectionItem | null> {
-    const result = await this.entity.query.byRoom({ roomId, slot }).go();
+    const result = await this.entity.query
+      .byRoom({ roomId })
+      .where(({ slot: slotAttr }, { eq }) => eq(slotAttr, slot))
+      .go();
     return result.data[0] || null;
   }
 }
