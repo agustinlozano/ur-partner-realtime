@@ -144,6 +144,7 @@ export const createRoomEntity = (client: DynamoDBDocumentClient) => {
         primary: {
           pk: {
             field: "room_id",
+            casing: "upper",
             composite: ["room_id"],
           },
         },
