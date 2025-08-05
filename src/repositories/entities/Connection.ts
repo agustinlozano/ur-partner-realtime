@@ -38,6 +38,7 @@ export const createConnectionEntity = (client: DynamoDBDocumentClient) => {
         primary: {
           pk: {
             field: "connectionId",
+            casing: "none", // Keep connectionId as-is (UUIDs)
             composite: ["connectionId"],
           },
         },
@@ -45,11 +46,8 @@ export const createConnectionEntity = (client: DynamoDBDocumentClient) => {
           index: "roomId-index",
           pk: {
             field: "roomId",
+            casing: "upper", // Ensure roomId is uppercase to match Room entity
             composite: ["roomId"],
-          },
-          sk: {
-            field: "slot",
-            composite: ["slot"],
           },
         },
       },
