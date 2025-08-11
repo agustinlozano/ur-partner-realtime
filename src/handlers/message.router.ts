@@ -21,6 +21,7 @@ export const routeMessage = async ({
     case "get_in":
     case "say":
     case "ping":
+    case "image_uploaded":
       return broadcast();
 
     case "leave":
