@@ -11,6 +11,20 @@ This guide will help you set up a realtime layer on AWS using:
 
 ---
 
+## Communication Flow
+
+![alt text](public/communication-schema.png)
+
+1. Client (Browser / App) → Opens a persistent WebSocket connection to your AWS endpoint.
+
+2. API Gateway (WebSocket API) → Manages and keeps the WebSocket connection alive; it assigns a unique connectionId to each client.
+
+3. $connect Lambda → Triggered when a client connects; usually stores the connectionId and related data (e.g., room info) in DynamoDB.
+
+4. $disconnect Lambda → Triggered when a client disconnects; removes the connectionId from DynamoDB.
+
+5. $message Lambda → Triggered when a client sends a message; processes the message, retrieves target connections from DynamoDB, and uses API Gateway Management to send messages back to other clients.
+
 ## 🧱 Initial Project Structure
 
 ```bash
@@ -34,16 +48,6 @@ my-app-realtime/
 │   └── types/
 │       └── RoomEvent.ts
 │       └── Room.ts
-```
-
----
-
-## 📦 Install Dependencies
-
-```bash
-pnpm init
-pnpm add hono @aws-sdk/client-dynamodb @aws-sdk/lib-dynamodb @aws-sdk/client-apigatewaymanagementapi
-pnpm add -D typescript esbuild @types/aws-lambda serverless
 ```
 
 ---
@@ -107,13 +111,3 @@ socket.onopen = () => {
 
 socket.onmessage = (e) => console.log("📨", e.data);
 ```
-
----
-
-## ✅ Next Steps
-
-- [x] `$connect`: store connectionId
-- [x] `$disconnect`: remove connectionId
-- [ ] `$default`: handle events (roomId, type)
-- [x] Client helper `useRoomSocket`
-- [x] Store in DynamoDB with `roomId` as partition key (use GSI if needed)
