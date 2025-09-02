@@ -1,14 +1,14 @@
-service: my-app-realtime
+service: ur-partnet-realtime
 
 frameworkVersion: "4"
 
 provider:
   name: aws
-  runtime: nodejs20.x
-  region: ${env:AWS_REGION, 'us-east-2'}
+  runtime: nodejs22.x
+  region: us-east-2
   environment:
-    CONNECTIONS_TABLE: ${env:CONNECTIONS_TABLE, 'Connections'}
-    ROOMS_TABLE: ${env:ROOMS_TABLE, 'Rooms'}
+    CONNECTIONS_TABLE: ${env:CONNECTIONS_TABLE}
+    ROOMS_TABLE: ${env:ROOMS_TABLE}
     WEBSOCKET_API_ENDPOINT: !Sub "https://${WebsocketsApi}.execute-api.${AWS::Region}.amazonaws.com/${sls:stage}"
   deploymentBucket:
     name: ur-partner
@@ -23,9 +23,9 @@ provider:
             - dynamodb:UpdateItem
             - dynamodb:GetItem
           Resource:
-            - arn:aws:dynamodb:${env:AWS_REGION, 'us-east-2'}:*:table/Rooms
-            - arn:aws:dynamodb:${env:AWS_REGION, 'us-east-2'}:*:table/Connections
-            - arn:aws:dynamodb:${env:AWS_REGION, 'us-east-2'}:*:table/Connections/index/roomId-index
+            - arn:aws:dynamodb:${env:AWS_REGION}:*:table/Rooms
+            - arn:aws:dynamodb:${env:AWS_REGION}:*:table/Connections
+            - arn:aws:dynamodb:${env:AWS_REGION}:*:table/Connections/index/roomId-index
 
         - Effect: Allow
           Action:
@@ -43,7 +43,7 @@ provider:
           Action:
             - ssm:GetParameter
             - ssm:PutParameter
-          Resource: "arn:aws:ssm:${env:AWS_REGION, 'us-east-2'}:*:parameter/serverless-framework/*"
+          Resource: "arn:aws:ssm:${env:AWS_REGION}:*:parameter/serverless-framework/*"
 
 functions:
   connect:
@@ -66,43 +66,6 @@ functions:
 
 plugins:
   - serverless-offline
-
-# resources:
-#   Resources:
-#     # Connetctions Config table
-#     ConnectionsTable:
-#       Type: AWS::DynamoDB::Table
-#       Properties:
-#         TableName: Connections
-#         AttributeDefinitions:
-#           - AttributeName: connectionId
-#             AttributeType: S
-#           - AttributeName: roomId
-#             AttributeType: S
-#         KeySchema:
-#           - AttributeName: connectionId
-#             KeyType: HASH
-#         GlobalSecondaryIndexes:
-#           - IndexName: roomId-index
-#             KeySchema:
-#               - AttributeName: roomId
-#                 KeyType: HASH
-#             Projection:
-#               ProjectionType: ALL
-#             BillingMode: PAY_PER_REQUEST
-#         BillingMode: PAY_PER_REQUEST
-
-#     RoomsTable:
-#       Type: AWS::DynamoDB::Table
-#       Properties:
-#         TableName: Rooms
-#         AttributeDefinitions:
-#           - AttributeName: room_id
-#             AttributeType: S
-#         KeySchema:
-#           - AttributeName: room_id
-#             KeyType: HASH
-#         BillingMode: PAY_PER_REQUEST
 
 # Package configuration (Serverless v4 handles bundling automatically)
 package:
