@@ -4,3 +4,5 @@ setup.md
 .serverless
 .env.local
 LAMBDA_USAGE.md
+row-sample.csv
+.env
